@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT-PAKOHUONE 2.0 – Digijärjestelmän palautus</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #1a2235;
+      --border: #1e3a5f;
+      --accent: #00d4ff;
+      --accent2: #00ff88;
+      --warn: #ff6b35;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0a0e1a 0%, #0d1f3c 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 2.5rem 1rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at center, rgba(0,212,255,0.05) 0%, transparent 60%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 1rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+      position: relative;
+    }
+
+    h1 span {
+      color: var(--accent2);
+    }
+
+    .subtitle {
+      margin-top: 0.6rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1.2rem 4rem;
+    }
+
+    /* Alert bar */
+    .alert {
+      background: rgba(255, 107, 53, 0.1);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 1rem 1.4rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+
+    .alert-icon { color: var(--warn); font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .alert-text { font-size: 0.9rem; line-height: 1.6; color: #fca; }
+    .alert-text strong { color: var(--warn); }
+
+    /* Stats row */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--accent);
+      text-shadow: var(--glow);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.3rem;
+    }
+
+    /* Section headings */
+    .section-title {
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Story block */
+    .story-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--warn);
+      padding: 1.8rem;
+      margin-bottom: 2.5rem;
+      line-height: 1.8;
+    }
+
+    .story-block p {
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+    }
+
+    .story-block p:last-child { margin-bottom: 0; }
+
+    .story-block .highlight {
+      color: var(--accent2);
+      font-weight: bold;
+    }
+
+    /* Rules */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .rule-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .rule-num {
+      color: var(--accent);
+      font-size: 1.4rem;
+      font-weight: bold;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .rule-text {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    /* Task cards */
+    .tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .task-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .task-card:hover { border-color: var(--accent); }
+
+    .task-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.4rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .task-num {
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: bold;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .task-name {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+    }
+
+    .task-letter-badge {
+      background: rgba(0,255,136,0.1);
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 0.1em;
+    }
+
+    .task-toggle {
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .task-card.open .task-toggle { transform: rotate(180deg); }
+
+    .task-body {
+      display: none;
+      padding: 0 1.4rem 1.2rem 3.8rem;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #94a3b8;
+      border-top: 1px solid var(--border);
+    }
+
+    .task-card.open .task-body { display: block; }
+
+    .task-body .tip {
+      margin-top: 0.7rem;
+      background: rgba(0,212,255,0.06);
+      border-left: 2px solid var(--accent);
+      padding: 0.5rem 0.8rem;
+      color: #7dd3fc;
+      font-size: 0.82rem;
+    }
+
+    .task-body .tip::before { content: '⚡ VINKKI: '; font-weight: bold; }
+
+    /* Password reveal */
+    .password-section {
+      background: var(--card);
+      border: 2px solid var(--accent2);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .password-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(0,255,136,0.05) 0%, transparent 70%);
+    }
+
+    .password-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .password-letters {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .pw-letter {
+      width: 3rem;
+      height: 3.5rem;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid var(--accent2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+    }
+
+    .pw-char {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--accent2);
+      text-shadow: 0 0 10px rgba(0,255,136,0.6);
+    }
+
+    .pw-task {
+      font-size: 0.55rem;
+      color: var(--muted);
+    }
+
+    .password-word {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.3em;
+    }
+
+    /* Verdict */
+    .verdict {
+      background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(0,255,136,0.05));
+      border: 1px solid var(--border);
+      padding: 1.5rem 1.8rem;
+      text-align: center;
+    }
+
+    .verdict p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .verdict strong { color: var(--text); }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+      letter-spacing: 0.1em;
+    }
+
+    /* Blinking cursor */
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1em;
+      background: var(--accent);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .pw-letter { width: 2.4rem; height: 3rem; }
+      .pw-char { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Tehtäväkuvaus // Opiskelijaversio</div>
+  <h1>IT-PAKOHUONE <span>2.0</span><span class="cursor"></span></h1>
+  <p class="subtitle">Digijärjestelmän palautus</p>
+</header>
+
+<div class="container">
+
+  <!-- Alert -->
+  <div class="alert">
+    <div class="alert-icon">⚠</div>
+    <div class="alert-text">
+      <strong>HÄLYTYS – JÄRJESTELMÄ LUKITTU</strong><br>
+      Koulun digijärjestelmä on kaatunut. IT-osasto on poissa käytöstä.
+      Kaikki tunnukset on lukittu. Tehtävänne on palauttaa järjestelmä käyttöön.
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value">60</div>
+      <div class="stat-label">Minuuttia aikaa</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">8</div>
+      <div class="stat-label">Tehtävää</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">3–4</div>
+      <div class="stat-label">Henkeä / tiimi</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">1</div>
+      <div class="stat-label">Pääsalasana</div>
+    </div>
+  </div>
+
+  <!-- Story -->
+  <p class="section-title">// TILANNEKATSAUS</p>
+  <div class="story-block">
+    <p>Koulun tietojärjestelmä on kaatunut. Kaikki käyttäjätunnukset ovat lukittuneet ja opiskelijoiden
+    työasemat eivät toimi normaalisti.</p>
+    <p>IT-osasto on poissa käytöstä.</p>
+    <p><span class="highlight">Te olette päivystävä IT-tukitiimi.</span> Tehtävänne on ratkaista tekniset
+    ongelmat ja palauttaa järjestelmä käyttöön.</p>
+    <p>Jokaisesta tehtävästä saatte <span class="highlight">yhden kirjaimen</span>.
+    Kun kaikki kirjaimet on löydetty, muodostuu <span class="highlight">pääsalasana</span>,
+    jolla järjestelmä palautetaan.</p>
+  </div>
+
+  <!-- Rules -->
+  <p class="section-title">// PELISÄÄNNÖT</p>
+  <div class="rules-grid">
+    <div class="rule-card">
+      <div class="rule-num">01</div>
+      <div class="rule-text">Jokainen tehtävä antaa yhden kirjaimen. Kirjaimet muodostavat pääsalasanan.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">02</div>
+      <div class="rule-text">Tehtävät suoritetaan järjestyksessä. Edellinen tehtävä ohjaa seuraavaan.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">03</div>
+      <div class="rule-text">Aikaa on 60 minuuttia. Tehkää yhteistyötä – jokaisen osaaminen tarvitaan.</div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-num">04</div>
+      <div class="rule-text">Voitte pyytää opettajalta vinkin, mutta se maksaa aikaa. Yrittäkää itse ensin.</div>
+    </div>
+  </div>
+
+  <!-- Tasks -->
+  <p class="section-title">// TEHTÄVÄT</p>
+  <div class="tasks">
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">1</div>
+        <div class="task-name">KADONNUT TIEDOSTO</div>
+        <div class="task-letter-badge">KIRJAIN #1</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Tietokoneella on kansio, jonka sisälle on piilotettu tiedosto.
+        Löytäkää se ja lukekaa sen sisältö. Tiedosto kertoo ensimmäisen kirjaimen
+        ja ohjaa teidät seuraavaan tehtävään.
+        <div class="tip">Piilotetut tiedostot eivät näy oletusasetuksilla. Selvittäkää, miten ne saadaan näkyviin.</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">2</div>
+        <div class="task-name">IP-OSOITE</div>
+        <div class="task-letter-badge">KIRJAIN #2</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Selvittäkää tämän tietokoneen IP-osoite. IP-osoitteen viimeinen numero toimii salasanana
+        tiedostoon, jossa on seuraava kirjain.
+        <div class="tip">Komentorivi on IT-tukihenkilön paras ystävä. Mikä komento näyttää verkkoyhteyden tiedot?</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">3</div>
+        <div class="task-name">QR-KOODI</div>
+        <div class="task-letter-badge">KIRJAIN #3</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Skannatkaa QR-koodi. Se johtaa teidet asiakastiketille.
+        Tiketti kuvaa ongelman – teidän on valittava oikea toimenpide kolmesta vaihtoehdosta.
+        Oikea vastaus on kolmas kirjain.
+        <div class="tip">Ajatelkaa kuin IT-tukihenkilö: mikä on <em>ensimmäinen</em> asia, jonka tarkistatte, kun asiakas ei pääse internetiin?</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">4</div>
+        <div class="task-name">SALASANAN PURKU</div>
+        <div class="task-letter-badge">KIRJAIN #4</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Teillä on salattu koodi. Se on purettu käyttämällä klassista salausmenetelmää.
+        Purkaessanne koodin saatte neljännen kirjaimen.
+        <div class="tip">Vihjeenä on: ROT13. Jos ette tiedä mikä se on – hakukone auttaa!</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">5</div>
+        <div class="task-name">TULOSTINONGELMA</div>
+        <div class="task-letter-badge">KIRJAIN #5</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Tulostimessa on ongelma – kuva kertoo mistä on kyse.
+        Selvittäkää ensimmäinen toimenpide ongelman ratkaisemiseksi.
+        Oikea toimenpide paljastaa viidennen kirjaimen.
+        <div class="tip">IT-tuki ratkaisee arjen ongelmia. Mitä tekisitte ensin, jos tulostimen ilmoitus kertoo jotain puuttuvan?</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">6</div>
+        <div class="task-name">VERKKOKAAVIO</div>
+        <div class="task-letter-badge">KIRJAIN #6</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Kuvassa on neljä verkon laitetta: <strong>Internet, Reititin, Kytkin</strong> ja <strong>Työasema</strong>.
+        Järjestäkää laitteet oikeaan järjestykseen – siitä muodostuu kuudes kirjain.
+        <div class="tip">Miettikää, miten tieto kulkee internetistä teidän työasemallenne. Mikä laite on ensimmäinen, mikä viimeinen?</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">7</div>
+        <div class="task-name">WIFI-YHTEYS</div>
+        <div class="task-letter-badge">KIRJAIN #7</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Teillä on vihje, joka liittyy langattomaan verkkoon.
+        Ratkaistuanne tehtävän saatte seitsemännen kirjaimen opettajalta.
+        <div class="tip">Tämä tehtävä vaatii yhteistyötä opettajan kanssa – kun olette valmiit, ilmoittakaa opettajalle.</div>
+      </div>
+    </div>
+
+    <div class="task-card" onclick="toggleTask(this)">
+      <div class="task-header">
+        <div class="task-num">8</div>
+        <div class="task-name">ASIAKASOHJE</div>
+        <div class="task-letter-badge">KIRJAIN #8</div>
+        <div class="task-toggle">▼</div>
+      </div>
+      <div class="task-body">
+        Kirjoittakaa selkeä, vähintään kolmivaiheinen ohje asiakkaalle aiheesta:
+        <br><br>
+        <strong>"Miten yhdistät langattomaan verkkoon?"</strong>
+        <br><br>
+        Hyvä asiakasohje on selkeä, yksinkertainen ja kaikille ymmärrettävä.
+        Kun ohje on valmis, saatte viimeisen kirjaimen.
+        <div class="tip">Kuvitelkaa, että asiakas ei ole tietotekniikan asiantuntija. Kirjoittakaa ohjeet sen mukaisesti.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Password -->
+  <p class="section-title">// PÄÄSALASANA</p>
+  <div class="password-section">
+    <div class="password-label">Kerää kirjaimet tehtävistä 1–8</div>
+    <div class="password-letters">
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 1</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 2</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 3</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 4</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 5</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 6</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 7</div></div>
+      <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 8</div></div>
+    </div>
+    <div class="password-word">_ _ _ _ _ _ _ _</div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="verdict">
+    <p>
+      <strong>Onnistuessanne</strong> syöttäkää pääsalasana opettajalle tai järjestelmään.<br>
+      Muistakaa kirjata ylös jokainen kirjain heti, kun löydätte sen.<br>
+      <strong>Hyvää metsästystä – IT-tukitiimi!</strong>
+    </p>
+  </div>
+
+</div>
+
+<footer>
+  IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus &nbsp;|&nbsp; Tieto- ja viestintätekniikan perustutkinto
+</footer>
+
+<script>
+  function toggleTask(card) {
+    card.classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>

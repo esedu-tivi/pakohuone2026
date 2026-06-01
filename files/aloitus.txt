@@ -1,20 +1,10 @@
-************************************************
+Hyvä IT-tukitiimi.
 
-DIGIJÄRJESTELMÄ ON LUKITTU
+Työasema näyttää toimivan normaalisti.
 
-Koulun tietojärjestelmä on kaatunut.
+Ensimmäinen kirjain on:D
 
-Te olette päivystävä IT-tukitiimi.
+Seuraava tehtävä:
 
-Ratkaiskaa kaikki tehtävät.
+Selvittäkää tämän tietokoneen IP-osoite.
 
-Jokaisesta tehtävästä saatte yhden kirjaimen.
-
-Kun kaikki kirjaimet on löydetty,
-muodostakaa pääsalasana.
-
-Ensimmäinen vihje löytyy kansiosta:
-
-IT_TUKI
-
-************************************************

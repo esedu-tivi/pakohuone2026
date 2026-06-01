@@ -53,25 +53,26 @@ ALOITUS.TXT
 
 # TEHTÄVÄ 1 – KADONNUT TIEDOSTO
 
-Kansio:
-
-IT_TUKI
-
 Kansion sisällä on piilotettu tiedosto.
+
+Kansio: IT_TUKI
+Tiedosto: aloitus.txt
 
 Tiedoston sisältö:
 
-"Hyvä IT-tuki.
+"Hyvä IT-tukitiimi.
 
-Selvitä tämän työaseman IP-osoite.
+Työasema näyttää toimivan normaalisti.
 
-Ensimmäinen kirjain on D."
+Ensimmäinen kirjain on:D
 
-Ratkaisu:
-Piilotetun tiedoston löytäminen
+Seuraava tehtävä:
 
-Kirjain:
-D
+Selvittäkää tämän tietokoneen IP-osoite."
+
+Ratkaisu: Piilotetun tiedoston löytäminen
+
+Kirjain: D
 
 ---
 
@@ -118,12 +119,10 @@ Mitä tarkistaisit ensin?
 Vaihtoehdot:
 
 A) Näytön kirkkaus
-B) Verkkoyhteys
-C) Kaiuttimet
+G) Verkkoyhteys
+H) Kaiuttimet
 
-Oikea vastaus:
-
-B
+Oikea vastaus: G
 
 Kirjain:
 G
