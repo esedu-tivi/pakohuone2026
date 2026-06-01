@@ -1,0 +1,11 @@
+Hyvä IT-tukitiimi.
+
+Työasema näyttää toimivan normaalisti.
+
+Seuraava tehtävä:
+
+Selvittäkää tämän tietokoneen IP-osoite.
+
+Ensimmäinen kirjain on:
+
+D

@@ -1,0 +1,20 @@
+************************************************
+
+DIGIJÄRJESTELMÄ ON LUKITTU
+
+Koulun tietojärjestelmä on kaatunut.
+
+Te olette päivystävä IT-tukitiimi.
+
+Ratkaiskaa kaikki tehtävät.
+
+Jokaisesta tehtävästä saatte yhden kirjaimen.
+
+Kun kaikki kirjaimet on löydetty,
+muodostakaa pääsalasana.
+
+Ensimmäinen vihje löytyy kansiosta:
+
+IT_TUKI
+
+************************************************
