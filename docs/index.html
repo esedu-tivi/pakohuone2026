@@ -403,6 +403,72 @@
       margin-left: 2px;
     }
 
+    /* Password input */
+    .pw-input-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 1.4rem;
+      flex-wrap: wrap;
+    }
+
+    .pw-input {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+      letter-spacing: 0.3em;
+      padding: 0.6rem 1rem;
+      text-transform: uppercase;
+      width: 14rem;
+      outline: none;
+      text-align: center;
+    }
+
+    .pw-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,212,255,0.3); }
+
+    .pw-btn {
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s;
+    }
+
+    .pw-btn:hover { background: rgba(0,212,255,0.2); }
+
+    .pw-result {
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.1em;
+      min-height: 1.4rem;
+      transition: opacity 0.3s;
+    }
+
+    .pw-result.correct { color: var(--accent2); }
+    .pw-result.wrong   { color: var(--warn); }
+
+    .pw-success-msg {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.2rem 1.5rem;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
     @media (max-width: 600px) {
       .pw-letter { width: 2.4rem; height: 3rem; }
       .pw-char { font-size: 1.2rem; }
@@ -622,13 +688,34 @@
       <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 7</div></div>
       <div class="pw-letter"><div class="pw-char">?</div><div class="pw-task">Teht. 8</div></div>
     </div>
-    <div class="password-word">_ _ _ _ _ _ _ _</div>
+
+    <div class="pw-input-row">
+      <input
+        id="pwField"
+        class="pw-input"
+        type="text"
+        maxlength="8"
+        placeholder="SYÖTÄ SALASANA"
+        oninput="onPwInput()"
+        onkeydown="if(event.key==='Enter') checkPassword()"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="pw-btn" onclick="checkPassword()">SYÖTÄ ▶</button>
+    </div>
+
+    <div id="pwResult" class="pw-result"></div>
+
+    <div id="pwSuccess" class="pw-success-msg">
+      DIGIJÄRJESTELMÄ PALAUTETTU<br>
+      IT-TUKITIIMI PELASTI KOULUN<br><br>
+      Onnittelut – erinomaista työtä!
+    </div>
   </div>
 
   <!-- Verdict -->
   <div class="verdict">
     <p>
-      <strong>Onnistuessanne</strong> syöttäkää pääsalasana opettajalle tai järjestelmään.<br>
       Muistakaa kirjata ylös jokainen kirjain heti, kun löydätte sen.<br>
       <strong>Hyvää metsästystä – IT-tukitiimi!</strong>
     </p>
@@ -643,6 +730,35 @@
 <script>
   function toggleTask(card) {
     card.classList.toggle('open');
+  }
+
+  function onPwInput() {
+    const result = document.getElementById('pwResult');
+    result.textContent = '';
+    result.className = 'pw-result';
+    document.getElementById('pwSuccess').style.display = 'none';
+  }
+
+  function checkPassword() {
+    const input = document.getElementById('pwField').value.trim().toUpperCase();
+    const result = document.getElementById('pwResult');
+    const success = document.getElementById('pwSuccess');
+
+    if (input === 'DIGITUKI') {
+      result.textContent = '✔ OIKEIN!';
+      result.className = 'pw-result correct';
+      success.style.display = 'block';
+    } else if (input.length === 0) {
+      result.textContent = 'Syötä salasana ensin.';
+      result.className = 'pw-result wrong';
+    } else {
+      result.textContent = '✘ Väärä salasana – tarkistakaa kirjaimet.';
+      result.className = 'pw-result wrong';
+      success.style.display = 'none';
+      const field = document.getElementById('pwField');
+      field.style.borderColor = 'var(--warn)';
+      setTimeout(() => { field.style.borderColor = ''; }, 1000);
+    }
   }
 </script>
 
