@@ -728,6 +728,9 @@
 </footer>
 
 <script>
+  // MUUTA tämä ennen julkaisua: https://api.sinun-domain.fi/api/check
+  const API_URL = 'https://api.sinun-domain.fi/api/check';
+
   function toggleTask(card) {
     card.classList.toggle('open');
   }
@@ -739,25 +742,51 @@
     document.getElementById('pwSuccess').style.display = 'none';
   }
 
-  function checkPassword() {
-    const input = document.getElementById('pwField').value.trim().toUpperCase();
+  async function checkPassword() {
+    const field = document.getElementById('pwField');
+    const input = field.value.trim();
     const result = document.getElementById('pwResult');
     const success = document.getElementById('pwSuccess');
+    const btn = document.querySelector('.pw-btn');
 
-    if (input === 'DIGITUKI') {
-      result.textContent = '✔ OIKEIN!';
-      result.className = 'pw-result correct';
-      success.style.display = 'block';
-    } else if (input.length === 0) {
+    if (input.length === 0) {
       result.textContent = 'Syötä salasana ensin.';
       result.className = 'pw-result wrong';
-    } else {
-      result.textContent = '✘ Väärä salasana – tarkistakaa kirjaimet.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '...';
+    result.textContent = '';
+    result.className = 'pw-result';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guess: input })
+      });
+
+      if (!res.ok) throw new Error('Verkkovirhe');
+
+      const data = await res.json();
+
+      if (data.correct) {
+        result.textContent = '✔ OIKEIN!';
+        result.className = 'pw-result correct';
+        success.style.display = 'block';
+      } else {
+        result.textContent = '✘ Väärä salasana – tarkistakaa kirjaimet.';
+        result.className = 'pw-result wrong';
+        field.style.borderColor = 'var(--warn)';
+        setTimeout(() => { field.style.borderColor = ''; }, 1000);
+      }
+    } catch {
+      result.textContent = '⚠ Palvelimeen ei saada yhteyttä.';
       result.className = 'pw-result wrong';
-      success.style.display = 'none';
-      const field = document.getElementById('pwField');
-      field.style.borderColor = 'var(--warn)';
-      setTimeout(() => { field.style.borderColor = ''; }, 1000);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'SYÖTÄ ▶';
     }
   }
 </script>
