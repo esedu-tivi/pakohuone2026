@@ -454,6 +454,43 @@
     .pw-result.correct { color: var(--accent2); }
     .pw-result.wrong   { color: var(--warn); }
 
+    .pw-cooldown {
+      display: none;
+      margin-top: 1rem;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 0.8rem 1.2rem;
+    }
+
+    .pw-cooldown.visible { display: flex; align-items: center; gap: 1rem; }
+
+    .pw-cooldown-timer {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--warn);
+      min-width: 3.5rem;
+      flex-shrink: 0;
+    }
+
+    .pw-cooldown-text {
+      font-size: 0.82rem;
+      color: #fca;
+      line-height: 1.5;
+    }
+
+    .pw-cooldown-bar-wrap {
+      height: 3px;
+      background: rgba(255,107,53,0.2);
+      margin-top: 0.4rem;
+    }
+
+    .pw-cooldown-bar {
+      height: 3px;
+      background: var(--warn);
+      width: 100%;
+    }
+
     .pw-success-msg {
       display: none;
       margin-top: 1.5rem;
@@ -706,6 +743,19 @@
 
     <div id="pwResult" class="pw-result"></div>
 
+    <div class="pw-cooldown" id="pwCooldown">
+      <div class="pw-cooldown-timer" id="pwCooldownTimer">5:00</div>
+      <div style="flex:1">
+        <div class="pw-cooldown-text">
+          <strong>Väärä salasana.</strong><br>
+          Odota 5 minuuttia ennen seuraavaa yritystä.
+        </div>
+        <div class="pw-cooldown-bar-wrap">
+          <div class="pw-cooldown-bar" id="pwCooldownBar"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="pwSuccess" class="pw-success-msg">
       DIGIJÄRJESTELMÄ PALAUTETTU<br>
       IT-TUKITIIMI PELASTI KOULUN<br><br>
@@ -729,24 +779,76 @@
 
 <script>
   const API_URL = 'https://escaperoomapi.purot.org/api/check';
+  const COOLDOWN_SEC = 300; // 5 minuuttia
+  let cooldownActive = false;
+  let cooldownInterval = null;
 
   function toggleTask(card) {
     card.classList.toggle('open');
   }
 
   function onPwInput() {
+    if (cooldownActive) return;
     const result = document.getElementById('pwResult');
     result.textContent = '';
     result.className = 'pw-result';
     document.getElementById('pwSuccess').style.display = 'none';
   }
 
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function startCooldown() {
+    cooldownActive = true;
+    const field  = document.getElementById('pwField');
+    const btn    = document.querySelector('.pw-btn');
+    const box    = document.getElementById('pwCooldown');
+    const timer  = document.getElementById('pwCooldownTimer');
+    const bar    = document.getElementById('pwCooldownBar');
+
+    field.disabled = true;
+    btn.disabled = true;
+    btn.textContent = 'SYÖTÄ ▶';
+    box.classList.add('visible');
+
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    let remaining = COOLDOWN_SEC;
+    timer.textContent = formatTime(remaining);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${COOLDOWN_SEC}s linear`;
+        bar.style.width = '0%';
+      });
+    });
+
+    cooldownInterval = setInterval(() => {
+      remaining--;
+      timer.textContent = formatTime(remaining);
+      if (remaining <= 0) {
+        clearInterval(cooldownInterval);
+        cooldownActive = false;
+        box.classList.remove('visible');
+        field.disabled = false;
+        field.value = '';
+        btn.disabled = false;
+      }
+    }, 1000);
+  }
+
   async function checkPassword() {
-    const field = document.getElementById('pwField');
-    const input = field.value.trim();
+    if (cooldownActive) return;
+
+    const field  = document.getElementById('pwField');
+    const input  = field.value.trim();
     const result = document.getElementById('pwResult');
     const success = document.getElementById('pwSuccess');
-    const btn = document.querySelector('.pw-btn');
+    const btn    = document.querySelector('.pw-btn');
 
     if (input.length === 0) {
       result.textContent = 'Syötä salasana ensin.';
@@ -774,16 +876,16 @@
         result.textContent = '✔ OIKEIN!';
         result.className = 'pw-result correct';
         success.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'SYÖTÄ ▶';
       } else {
         result.textContent = '✘ Väärä salasana – tarkistakaa kirjaimet.';
         result.className = 'pw-result wrong';
-        field.style.borderColor = 'var(--warn)';
-        setTimeout(() => { field.style.borderColor = ''; }, 1000);
+        startCooldown();
       }
     } catch {
       result.textContent = '⚠ Palvelimeen ei saada yhteyttä.';
       result.className = 'pw-result wrong';
-    } finally {
       btn.disabled = false;
       btn.textContent = 'SYÖTÄ ▶';
     }
