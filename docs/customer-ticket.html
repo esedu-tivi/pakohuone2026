@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tehtävä 3 – Asiakastiketti</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #1a2235;
+      --border: #1e3a5f;
+      --accent: #00d4ff;
+      --accent2: #00ff88;
+      --warn: #ff6b35;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 580px;
+    }
+
+    /* Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .task-badge {
+      display: inline-block;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 1rem;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.08em;
+    }
+
+    .intro {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* Ticket */
+    .ticket {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .ticket-topbar {
+      background: rgba(0,212,255,0.06);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .ticket-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+
+    .ticket-id {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+
+    .ticket-status {
+      margin-left: auto;
+      font-size: 0.65rem;
+      background: rgba(255,107,53,0.15);
+      border: 1px solid var(--warn);
+      color: var(--warn);
+      padding: 0.15rem 0.5rem;
+      letter-spacing: 0.1em;
+    }
+
+    .ticket-body {
+      padding: 1.4rem 1.4rem 0.8rem;
+    }
+
+    .ticket-field {
+      margin-bottom: 1rem;
+    }
+
+    .ticket-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+
+    .ticket-value {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .ticket-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1rem 0;
+    }
+
+    .ticket-question {
+      font-size: 1rem;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      padding: 0 1.4rem 1.4rem;
+    }
+
+    /* Options */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .option-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      padding: 0.9rem 1.2rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.05);
+    }
+
+    .option-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    .option-key {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--muted);
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .option-btn.wrong {
+      border-color: var(--warn);
+      background: rgba(255,107,53,0.08);
+    }
+
+    .option-btn.wrong .option-key {
+      border-color: var(--warn);
+      color: var(--warn);
+    }
+
+    /* Cooldown */
+    .cooldown-box {
+      display: none;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .cooldown-box.visible { display: flex; align-items: center; gap: 1rem; }
+
+    .cooldown-text {
+      font-size: 0.88rem;
+      color: #fca;
+      line-height: 1.5;
+    }
+
+    .cooldown-timer {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--warn);
+      flex-shrink: 0;
+      min-width: 2.5rem;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .cooldown-bar-wrap {
+      background: rgba(255,107,53,0.15);
+      height: 3px;
+      margin-top: 0.6rem;
+      width: 100%;
+    }
+
+    .cooldown-bar {
+      height: 3px;
+      background: var(--warn);
+      width: 100%;
+      transition: width 1s linear;
+    }
+
+    /* Success */
+    .success-box {
+      display: none;
+      background: rgba(0,255,136,0.07);
+      border: 2px solid var(--accent2);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .success-box.visible { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .success-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .success-letter {
+      font-size: 5rem;
+      font-weight: bold;
+      color: var(--accent2);
+      text-shadow: 0 0 30px rgba(0,255,136,0.7);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-msg {
+      font-size: 0.9rem;
+      color: var(--accent2);
+      letter-spacing: 0.05em;
+      margin-top: 0.8rem;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="page-header">
+    <div class="task-badge">Tehtävä 3 / 8</div>
+    <h1>ASIAKASTIKETTI</h1>
+    <p class="intro">Kolmas kirjain löytyy asiakastiketistä</p>
+  </div>
+
+  <!-- Ticket -->
+  <div class="ticket">
+    <div class="ticket-topbar">
+      <div class="ticket-dot"></div>
+      <span class="ticket-id">TIKETTI #IT-2026-0047</span>
+      <span class="ticket-status">AVOIN</span>
+    </div>
+    <div class="ticket-body">
+      <div class="ticket-field">
+        <div class="ticket-label">Asiakas</div>
+        <div class="ticket-value">Opiskelija, luokka 101</div>
+      </div>
+      <div class="ticket-field">
+        <div class="ticket-label">Ongelma</div>
+        <div class="ticket-value">En pääse internetiin.</div>
+      </div>
+      <hr class="ticket-divider" />
+      <div class="ticket-field">
+        <div class="ticket-label">Prioriteetti</div>
+        <div class="ticket-value">Korkea</div>
+      </div>
+    </div>
+    <div class="ticket-question">Mitä tarkistaisit ensin?</div>
+  </div>
+
+  <!-- Cooldown -->
+  <div class="cooldown-box" id="cooldownBox">
+    <div class="cooldown-timer" id="cooldownTimer">30</div>
+    <div>
+      <div class="cooldown-text">
+        <strong>Väärä vastaus.</strong><br>
+        Odota ennen seuraavaa yritystä.
+      </div>
+      <div class="cooldown-bar-wrap">
+        <div class="cooldown-bar" id="cooldownBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-box" id="successBox">
+    <div class="success-label">Kolmas kirjain on</div>
+    <div class="success-letter">G</div>
+    <div class="success-msg">Oikein! Kirjaa kirjain ylös ja siirry seuraavaan tehtävään.</div>
+  </div>
+
+  <!-- Options -->
+  <div class="options" id="options">
+    <button class="option-btn" onclick="choose(this, false)">
+      <span class="option-key">A</span>
+      <span>Näytön kirkkaus</span>
+    </button>
+    <button class="option-btn" onclick="choose(this, true)">
+      <span class="option-key">G</span>
+      <span>Verkkoyhteys</span>
+    </button>
+    <button class="option-btn" onclick="choose(this, false)">
+      <span class="option-key">H</span>
+      <span>Kaiuttimet</span>
+    </button>
+  </div>
+
+</div>
+
+<footer>IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus</footer>
+
+<script>
+  const COOLDOWN_SECONDS = 30;
+  let cooldownActive = false;
+  let cooldownInterval = null;
+
+  function choose(btn, correct) {
+    if (cooldownActive) return;
+
+    if (correct) {
+      // Disable all buttons permanently
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+      document.getElementById('successBox').classList.add('visible');
+      document.getElementById('options').style.opacity = '0.3';
+    } else {
+      startCooldown(btn);
+    }
+  }
+
+  function startCooldown(wrongBtn) {
+    cooldownActive = true;
+    const buttons = document.querySelectorAll('.option-btn');
+    buttons.forEach(b => b.disabled = true);
+    wrongBtn.classList.add('wrong');
+
+    const box   = document.getElementById('cooldownBox');
+    const timer = document.getElementById('cooldownTimer');
+    const bar   = document.getElementById('cooldownBar');
+
+    box.classList.add('visible');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    let remaining = COOLDOWN_SECONDS;
+    timer.textContent = remaining;
+
+    // Trigger reflow so transition applies from full width
+    bar.getBoundingClientRect();
+    bar.style.transition = `width ${COOLDOWN_SECONDS}s linear`;
+    bar.style.width = '0%';
+
+    cooldownInterval = setInterval(() => {
+      remaining--;
+      timer.textContent = remaining;
+
+      if (remaining <= 0) {
+        clearInterval(cooldownInterval);
+        cooldownActive = false;
+        wrongBtn.classList.remove('wrong');
+        buttons.forEach(b => b.disabled = false);
+        box.classList.remove('visible');
+      }
+    }, 1000);
+  }
+</script>
+</body>
+</html>

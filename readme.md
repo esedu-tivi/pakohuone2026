@@ -90,7 +90,7 @@ Työpöydällä on PDF:
 
 IP_VASTAUS.PDF
 
-PDF:n salasana on IP-osoitteen viimeinen numero.
+PDF:n salasana on IP-osoitteen toinen numero.
 
 Kun PDF avataan:
 
