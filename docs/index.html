@@ -780,6 +780,7 @@
 <script>
   const API_URL = 'https://escaperoomapi.purot.org/api/check';
   const COOLDOWN_SEC = 300; // 5 minuuttia
+  const STORAGE_KEY = 'pakohuone_pw_cooldown_until';
   let cooldownActive = false;
   let cooldownInterval = null;
 
@@ -801,38 +802,46 @@
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
-  function startCooldown() {
+  function startCooldown(remaining) {
+    // Jos kutsutaan ilman argumenttia, aloitetaan uusi cooldown ja tallennetaan aika
+    if (remaining === undefined) {
+      remaining = COOLDOWN_SEC;
+      localStorage.setItem(STORAGE_KEY, Date.now() + COOLDOWN_SEC * 1000);
+    }
+
     cooldownActive = true;
-    const field  = document.getElementById('pwField');
-    const btn    = document.querySelector('.pw-btn');
-    const box    = document.getElementById('pwCooldown');
-    const timer  = document.getElementById('pwCooldownTimer');
-    const bar    = document.getElementById('pwCooldownBar');
+    const field = document.getElementById('pwField');
+    const btn   = document.querySelector('.pw-btn');
+    const box   = document.getElementById('pwCooldown');
+    const timer = document.getElementById('pwCooldownTimer');
+    const bar   = document.getElementById('pwCooldownBar');
 
     field.disabled = true;
     btn.disabled = true;
     btn.textContent = 'SYÖTÄ ▶';
     box.classList.add('visible');
-
-    bar.style.transition = 'none';
-    bar.style.width = '100%';
-
-    let remaining = COOLDOWN_SEC;
     timer.textContent = formatTime(remaining);
+
+    // Palkki skaalataan jäljellä olevan ajan mukaan
+    const pct = (remaining / COOLDOWN_SEC) * 100;
+    bar.style.transition = 'none';
+    bar.style.width = pct + '%';
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        bar.style.transition = `width ${COOLDOWN_SEC}s linear`;
+        bar.style.transition = `width ${remaining}s linear`;
         bar.style.width = '0%';
       });
     });
 
+    clearInterval(cooldownInterval);
     cooldownInterval = setInterval(() => {
       remaining--;
       timer.textContent = formatTime(remaining);
       if (remaining <= 0) {
         clearInterval(cooldownInterval);
         cooldownActive = false;
+        localStorage.removeItem(STORAGE_KEY);
         box.classList.remove('visible');
         field.disabled = false;
         field.value = '';
@@ -840,6 +849,18 @@
       }
     }, 1000);
   }
+
+  // Tarkista sivun latautuessa onko cooldown vielä voimassa
+  (function checkStoredCooldown() {
+    const until = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+    if (!until) return;
+    const remaining = Math.ceil((until - Date.now()) / 1000);
+    if (remaining > 0) {
+      startCooldown(remaining);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  })();
 
   async function checkPassword() {
     if (cooldownActive) return;
