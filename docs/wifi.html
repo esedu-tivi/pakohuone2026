@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tehtävä 7 – WiFi</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card: #1a2235;
+      --border: #1e3a5f;
+      --accent: #00d4ff;
+      --accent2: #00ff88;
+      --warn: #ff6b35;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .wrapper { width: 100%; max-width: 560px; }
+
+    /* Header */
+    .page-header { text-align: center; margin-bottom: 2rem; }
+
+    .task-badge {
+      display: inline-block;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 1rem;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.08em;
+    }
+
+    .intro {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+    }
+
+    /* Intercept card */
+    .intercept {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--warn);
+      margin-bottom: 1.5rem;
+    }
+
+    .intercept-topbar {
+      background: rgba(255,107,53,0.07);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.7rem;
+      color: var(--warn);
+      letter-spacing: 0.15em;
+    }
+
+    .intercept-body {
+      padding: 1.4rem;
+    }
+
+    .intercept-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .intercept-value {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 1.2rem;
+      line-height: 1.5;
+    }
+
+    /* Binary display */
+    .binary-block {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      text-align: center;
+      margin-bottom: 1.4rem;
+    }
+
+    .binary-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .binary-code {
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      font-weight: bold;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.25em;
+      line-height: 1.8;
+      word-break: break-all;
+    }
+
+    .binary-groups {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+    }
+
+    .bin-group {
+      font-size: clamp(1rem, 3.5vw, 1.4rem);
+      font-weight: bold;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.15em;
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.15);
+      padding: 0.3rem 0.5rem;
+    }
+
+    /* Hint toggle */
+    .hint-toggle {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      padding: 0;
+      display: block;
+      margin: 0 auto 1.5rem;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .hint-toggle:hover { color: var(--accent); }
+
+    .hint-box {
+      display: none;
+      background: rgba(0,212,255,0.04);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.82rem;
+      color: #7dd3fc;
+      line-height: 1.7;
+    }
+
+    .hint-box.visible { display: block; }
+
+    .hint-box table {
+      margin-top: 0.6rem;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    .hint-box td {
+      padding: 0.2rem 0.8rem 0.2rem 0;
+      font-size: 0.8rem;
+    }
+
+    .hint-box td:first-child { color: var(--accent); }
+
+    /* Input */
+    .input-section { margin-bottom: 1.2rem; }
+
+    .input-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .pw-input {
+      flex: 1;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      padding: 0.7rem 1rem;
+      outline: none;
+      min-width: 0;
+    }
+
+    .pw-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,212,255,0.2); }
+
+    .check-btn {
+      background: rgba(0,212,255,0.08);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      padding: 0.7rem 1.2rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .check-btn:hover:not(:disabled) { background: rgba(0,212,255,0.16); }
+    .check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Cooldown */
+    .cooldown-box {
+      display: none;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .cooldown-box.visible { display: flex; align-items: center; gap: 1rem; }
+
+    .cooldown-timer {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--warn);
+      min-width: 2.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .cooldown-text {
+      font-size: 0.85rem;
+      color: #fca;
+      line-height: 1.5;
+    }
+
+    .cooldown-bar-wrap {
+      height: 3px;
+      background: rgba(255,107,53,0.2);
+      margin-top: 0.5rem;
+    }
+
+    .cooldown-bar {
+      height: 3px;
+      background: var(--warn);
+      width: 100%;
+    }
+
+    /* Success */
+    .success-box {
+      display: none;
+      background: rgba(0,255,136,0.07);
+      border: 2px solid var(--accent2);
+      padding: 1.8rem;
+      margin-bottom: 1.2rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .success-box.visible { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .success-header {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .wifi-info {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(0,255,136,0.2);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .wifi-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.35rem 0;
+      font-size: 0.88rem;
+    }
+
+    .wifi-row + .wifi-row {
+      border-top: 1px solid rgba(0,255,136,0.1);
+    }
+
+    .wifi-key { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.1em; }
+    .wifi-val { color: var(--accent2); font-weight: bold; letter-spacing: 0.05em; }
+
+    .success-instruction {
+      background: rgba(0,212,255,0.05);
+      border-left: 3px solid var(--accent);
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .success-instruction strong { color: var(--text); }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="page-header">
+    <div class="task-badge">Tehtävä 7 / 8</div>
+    <h1>LANGATON VERKKO</h1>
+    <p class="intro">IT-osasto on salannut verkkotunnukset binäärikoodilla</p>
+  </div>
+
+  <!-- Intercepted message card -->
+  <div class="intercept">
+    <div class="intercept-topbar">
+      ⚠ KAAPATTU VERKKOVIESTI
+    </div>
+    <div class="intercept-body">
+      <div class="intercept-label">Lähde</div>
+      <div class="intercept-value">IT-osasto / sisäinen tiedonsiirto</div>
+
+      <div class="intercept-label">Viesti</div>
+      <div class="intercept-value">
+        Langattoman verkon salasana on salattu binäärimuotoon.<br>
+        Purkakaa koodi ja yhdistäkää verkkoon <strong style="color:var(--text)">KOULU-VERKKO</strong>.
+      </div>
+
+      <div class="binary-block">
+        <div class="binary-label">Salasana binäärinä</div>
+        <div class="binary-groups">
+          <span class="bin-group">1011</span>
+          <span class="bin-group">1010</span>
+          <span class="bin-group">1000</span>
+          <span class="bin-group">1001</span>
+          <span class="bin-group">010</span>
+        </div>
+      </div>
+
+      <div class="intercept-label">Ohje</div>
+      <div class="intercept-value" style="margin-bottom:0">
+        Muuntakaa binääriluku kymmenjärjestelmään — se on WiFi-salasana.
+      </div>
+    </div>
+  </div>
+
+  <!-- Hint -->
+  <button class="hint-toggle" onclick="toggleHint()">⚡ Tarvitsetko vihjeen?</button>
+  <div class="hint-box" id="hintBox">
+    Binääriluku muunnetaan kymmenjärjestelmään kertomalla jokainen bitti
+    kahden potenssilla sen paikan mukaan (oikealta alkaen, paikka 0):
+    <table>
+      <tr><td>2⁰ = 1</td><td>2¹ = 2</td><td>2² = 4</td><td>2³ = 8</td></tr>
+      <tr><td>2⁴ = 16</td><td>2⁵ = 32</td><td>2⁶ = 64</td><td>2⁷ = 128</td></tr>
+    </table>
+    <br>Esimerkki: <span style="color:var(--accent)">1010</span> =
+    1×8 + 0×4 + 1×2 + 0×1 = <span style="color:var(--accent2)">10</span>
+  </div>
+
+  <!-- Cooldown -->
+  <div class="cooldown-box" id="cooldownBox">
+    <div class="cooldown-timer" id="cooldownTimer">30</div>
+    <div style="flex:1">
+      <div class="cooldown-text">
+        <strong>Väärä salasana.</strong><br>
+        Tarkista laskusi ja yritä uudelleen.
+      </div>
+      <div class="cooldown-bar-wrap">
+        <div class="cooldown-bar" id="cooldownBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-box" id="successBox">
+    <div class="success-header">Koodi purettu — yhdistä verkkoon</div>
+    <div class="wifi-info">
+      <div class="wifi-row">
+        <span class="wifi-key">VERKKO (SSID)</span>
+        <span class="wifi-val">KOULU-VERKKO</span>
+      </div>
+      <div class="wifi-row">
+        <span class="wifi-key">SALASANA</span>
+        <span class="wifi-val">382026</span>
+      </div>
+    </div>
+    <div class="success-instruction">
+      Yhdistäkää tietokone langattomaan verkkoon <strong>KOULU-VERKKO</strong>
+      yllä olevalla salasanalla.<br><br>
+      Kun yhteys on muodostettu, <strong>ilmoittakaa opettajalle</strong>
+      — opettaja antaa seitsemännen kirjaimen.
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-section">
+    <div class="input-label">Syötä purettu salasana</div>
+    <div class="input-row">
+      <input
+        id="pwField"
+        class="pw-input"
+        type="text"
+        maxlength="10"
+        placeholder="______"
+        autocomplete="off"
+        spellcheck="false"
+        onkeydown="if(event.key==='Enter') checkPassword()"
+      />
+      <button class="check-btn" id="checkBtn" onclick="checkPassword()">TARKISTA ▶</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus</footer>
+
+<script>
+  const CORRECT = '382026';
+  const COOLDOWN_SEC = 30;
+  let cooldownActive = false;
+
+  function toggleHint() {
+    document.getElementById('hintBox').classList.toggle('visible');
+  }
+
+  function checkPassword() {
+    if (cooldownActive) return;
+
+    const input = document.getElementById('pwField').value.trim();
+
+    if (!input) return;
+
+    if (input === CORRECT) {
+      document.getElementById('pwField').disabled = true;
+      document.getElementById('checkBtn').disabled = true;
+      document.getElementById('successBox').classList.add('visible');
+      document.getElementById('hintBox').classList.remove('visible');
+      document.querySelector('.hint-toggle').style.display = 'none';
+    } else {
+      startCooldown();
+    }
+  }
+
+  function startCooldown() {
+    cooldownActive = true;
+    document.getElementById('checkBtn').disabled = true;
+
+    const box   = document.getElementById('cooldownBox');
+    const timer = document.getElementById('cooldownTimer');
+    const bar   = document.getElementById('cooldownBar');
+
+    box.classList.add('visible');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    let remaining = COOLDOWN_SEC;
+    timer.textContent = remaining;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${COOLDOWN_SEC}s linear`;
+        bar.style.width = '0%';
+      });
+    });
+
+    const interval = setInterval(() => {
+      remaining--;
+      timer.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        cooldownActive = false;
+        box.classList.remove('visible');
+        document.getElementById('checkBtn').disabled = false;
+        document.getElementById('pwField').value = '';
+      }
+    }, 1000);
+  }
+</script>
+</body>
+</html>
