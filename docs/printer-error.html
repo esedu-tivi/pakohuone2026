@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tehtävä 5 – Tulostinongelma</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card: #1a2235;
+      --border: #1e3a5f;
+      --accent: #00d4ff;
+      --accent2: #00ff88;
+      --warn: #ff6b35;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .wrapper { width: 100%; max-width: 540px; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { text-align: center; margin-bottom: 2rem; }
+
+    .task-badge {
+      display: inline-block;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 1rem;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.08em;
+    }
+
+    .intro {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    /* ── QUESTION AREA (hidden until popup dismissed) ── */
+    .question-area {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .question-area.visible { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .question-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      padding: 1.4rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .q-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    .q-text {
+      font-size: 1rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── OPTIONS ── */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .option-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      padding: 0.9rem 1.2rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.05);
+    }
+
+    .option-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    .option-key {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid var(--muted);
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .option-btn.wrong { border-color: var(--warn); background: rgba(255,107,53,0.08); }
+    .option-btn.wrong .option-key { border-color: var(--warn); color: var(--warn); }
+
+    /* ── COOLDOWN ── */
+    .cooldown-box {
+      display: none;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .cooldown-box.visible { display: flex; align-items: center; gap: 1rem; }
+
+    .cooldown-timer {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--warn);
+      min-width: 2.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .cooldown-text { font-size: 0.85rem; color: #fca; line-height: 1.5; }
+
+    .cooldown-bar-wrap { height: 3px; background: rgba(255,107,53,0.2); margin-top: 0.5rem; }
+    .cooldown-bar { height: 3px; background: var(--warn); width: 100%; }
+
+    /* ── SUCCESS ── */
+    .success-box {
+      display: none;
+      background: rgba(0,255,136,0.07);
+      border: 2px solid var(--accent2);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .success-box.visible { display: block; }
+
+    .success-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .success-letter {
+      font-size: 5rem;
+      font-weight: bold;
+      color: var(--accent2);
+      text-shadow: 0 0 30px rgba(0,255,136,0.7);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-msg { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+
+    /* ── WINDOWS ERROR POPUP OVERLAY ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      padding: 1rem;
+      animation: overlayIn 0.2s ease;
+    }
+
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .win-dialog {
+      background: #ece9d8;
+      border: 2px solid #0054e3;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 4px 4px 0 #000, inset 1px 1px 0 #fff;
+      font-family: 'Tahoma', 'Arial', sans-serif;
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .win-titlebar {
+      background: linear-gradient(to right, #0054e3, #2b8ee0);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: bold;
+      padding: 0.35rem 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .win-titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .win-titlebar-icon { font-size: 0.85rem; }
+
+    .win-close {
+      background: #c0392b;
+      border: 1px solid #922b21;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: bold;
+      width: 1.2rem;
+      height: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: 'Arial', sans-serif;
+      flex-shrink: 0;
+    }
+
+    .win-body {
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .win-icon {
+      font-size: 2.2rem;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 0.1rem;
+    }
+
+    .win-content {}
+
+    .win-title-text {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #000;
+      margin-bottom: 0.5rem;
+    }
+
+    .win-message {
+      font-size: 0.78rem;
+      color: #222;
+      line-height: 1.5;
+      margin-bottom: 0.3rem;
+    }
+
+    .win-code {
+      font-size: 0.72rem;
+      color: #555;
+      font-family: 'Courier New', monospace;
+    }
+
+    .win-footer {
+      border-top: 1px solid #aaa;
+      padding: 0.7rem 1.4rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      background: #d4d0c8;
+    }
+
+    .win-btn {
+      background: linear-gradient(to bottom, #fff, #ddd);
+      border: 1px solid #888;
+      color: #000;
+      font-family: 'Tahoma', 'Arial', sans-serif;
+      font-size: 0.78rem;
+      padding: 0.3rem 1.4rem;
+      cursor: pointer;
+      box-shadow: 1px 1px 0 #fff inset;
+      min-width: 4.5rem;
+      text-align: center;
+    }
+
+    .win-btn:hover { background: linear-gradient(to bottom, #ddeeff, #b8d4f0); border-color: #0054e3; }
+    .win-btn:active { box-shadow: none; transform: translate(1px,1px); }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Windows error popup -->
+<div class="overlay" id="overlay">
+  <div class="win-dialog">
+    <div class="win-titlebar">
+      <div class="win-titlebar-left">
+        <span class="win-titlebar-icon">🖨</span>
+        <span>Tulostin — Virhe</span>
+      </div>
+      <div class="win-close" onclick="dismissPopup()">✕</div>
+    </div>
+    <div class="win-body">
+      <div class="win-icon">⛔</div>
+      <div class="win-content">
+        <div class="win-title-text">Tulostus epäonnistui</div>
+        <div class="win-message">
+          Tulostinta ei voida käyttää.<br>
+          Virhekoodi: <strong>Wrong printer driver</strong>
+        </div>
+        <div class="win-code">ERROR_INVALID_DRIVER 0x0000007E</div>
+      </div>
+    </div>
+    <div class="win-footer">
+      <button class="win-btn" onclick="dismissPopup()">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <div class="page-header">
+    <div class="task-badge">Tehtävä 5 / 8</div>
+    <h1>TULOSTINONGELMA</h1>
+    <p class="intro">Tulostimesta tuli virheilmoitus.<br>Selvittäkää mitä pitää tehdä.</p>
+  </div>
+
+  <div class="question-area" id="questionArea">
+
+    <div class="question-card">
+      <div class="q-label">Tilanne</div>
+      <div class="q-text">
+        Käyttäjä yrittää tulostaa, mutta saa virheen
+        <strong style="color:var(--warn)">"Wrong printer driver"</strong>.
+        <br><br>
+        Mikä on oikea toimenpide ongelman ratkaisemiseksi?
+      </div>
+    </div>
+
+    <div class="cooldown-box" id="cooldownBox">
+      <div class="cooldown-timer" id="cooldownTimer">30</div>
+      <div style="flex:1">
+        <div class="cooldown-text">
+          <strong>Väärä vastaus.</strong><br>
+          Odota ennen seuraavaa yritystä.
+        </div>
+        <div class="cooldown-bar-wrap">
+          <div class="cooldown-bar" id="cooldownBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="success-box" id="successBox">
+      <div class="success-label">Viides kirjain on</div>
+      <div class="success-letter">T</div>
+      <div class="success-msg">Oikein! Kirjaa kirjain ylös ja siirry seuraavaan tehtävään.</div>
+    </div>
+
+    <div class="options" id="options"></div>
+
+  </div>
+
+</div>
+
+<footer>IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus</footer>
+
+<script>
+  const COOLDOWN_SEC = 30;
+  let cooldownActive = false;
+
+  const WRONG = [
+    { key: 'A', label: 'Lisää paperia tulostimeen' },
+    { key: 'B', label: 'Vaihda mustekasetti' },
+    { key: 'C', label: 'Käynnistä tietokone uudelleen' },
+    { key: 'D', label: 'Tarkista verkkoyhteys' },
+    { key: 'E', label: 'Soita tulostimen valmistajalle' },
+    { key: 'F', label: 'Vaihda USB-kaapeli' },
+  ];
+
+  const CORRECT_OPT = { key: 'T', label: 'Asenna tulostinajuri uudelleen', correct: true };
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildOptions() {
+    const container = document.getElementById('options');
+    const wrong = shuffle(WRONG);
+    const insertAt = Math.floor(Math.random() * (wrong.length + 1));
+    const all = [...wrong.slice(0, insertAt), CORRECT_OPT, ...wrong.slice(insertAt)];
+
+    all.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="option-key">${opt.key}</span><span>${opt.label}</span>`;
+      btn.onclick = () => choose(btn, !!opt.correct);
+      container.appendChild(btn);
+    });
+  }
+
+  function dismissPopup() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('questionArea').classList.add('visible');
+  }
+
+  function choose(btn, correct) {
+    if (cooldownActive) return;
+
+    if (correct) {
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+      document.getElementById('successBox').classList.add('visible');
+      document.getElementById('options').style.opacity = '0.3';
+    } else {
+      startCooldown(btn);
+    }
+  }
+
+  function startCooldown(wrongBtn) {
+    cooldownActive = true;
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+    wrongBtn.classList.add('wrong');
+
+    const box   = document.getElementById('cooldownBox');
+    const timer = document.getElementById('cooldownTimer');
+    const bar   = document.getElementById('cooldownBar');
+
+    box.classList.add('visible');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    let remaining = COOLDOWN_SEC;
+    timer.textContent = remaining;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${COOLDOWN_SEC}s linear`;
+        bar.style.width = '0%';
+      });
+    });
+
+    const interval = setInterval(() => {
+      remaining--;
+      timer.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        cooldownActive = false;
+        wrongBtn.classList.remove('wrong');
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+        box.classList.remove('visible');
+      }
+    }, 1000);
+  }
+
+  buildOptions();
+</script>
+</body>
+</html>
