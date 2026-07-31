@@ -365,6 +365,45 @@
 <footer>IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus</footer>
 
 <script>
+  // Väärät vaihtoehdot – sekoitetaan satunnaiseen järjestykseen
+  const WRONG = [
+    { key: 'A', label: 'Näytön kirkkaus' },
+    { key: 'B', label: 'Tulostimen tila' },
+    { key: 'C', label: 'Hiiren asetukset' },
+    { key: 'D', label: 'Näppäimistön kieli' },
+    { key: 'E', label: 'Äänikortin ajurit' },
+    { key: 'F', label: 'Taustamusiikin äänenvoimakkuus' },
+    { key: 'H', label: 'Kaiuttimet' },
+  ];
+
+  // Oikea vastaus – kirjain G pysyy aina G:nä
+  const CORRECT_OPT = { key: 'G', label: 'Verkkoyhteys', correct: true };
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildOptions() {
+    const container = document.getElementById('options');
+    // Sekoitetut väärät + oikea satunnaiseen kohtaan
+    const wrong = shuffle(WRONG);
+    const insertAt = Math.floor(Math.random() * (wrong.length + 1));
+    const all = [...wrong.slice(0, insertAt), CORRECT_OPT, ...wrong.slice(insertAt)];
+
+    all.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="option-key">${opt.key}</span><span>${opt.label}</span>`;
+      btn.onclick = () => choose(btn, !!opt.correct);
+      container.appendChild(btn);
+    });
+  }
+
   const COOLDOWN_SECONDS = 30;
   let cooldownActive = false;
   let cooldownInterval = null;
@@ -417,6 +456,8 @@
       }
     }, 1000);
   }
+
+  buildOptions();
 </script>
 </body>
 </html>
