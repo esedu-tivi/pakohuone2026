@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tehtävä 6 – Verkkokaavio</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --card: #1a2235;
+      --border: #1e3a5f;
+      --accent: #00d4ff;
+      --accent2: #00ff88;
+      --warn: #ff6b35;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .wrapper { width: 100%; max-width: 520px; }
+
+    /* Header */
+    .page-header { text-align: center; margin-bottom: 2rem; }
+
+    .task-badge {
+      display: inline-block;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding: 0.3rem 1rem;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 0.08em;
+    }
+
+    .intro {
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+    }
+
+    /* Instruction card */
+    .instruction {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 0.9rem 1.2rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Device list */
+    .device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      user-select: none;
+    }
+
+    .device-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .device {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      cursor: grab;
+      transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+      position: relative;
+    }
+
+    .device:active { cursor: grabbing; }
+    .device.dragging { opacity: 0.35; }
+
+    .device.drop-above { border-top: 2px solid var(--accent); }
+    .device.drop-below { border-bottom: 2px solid var(--accent); }
+
+    .device-pos {
+      width: 1.8rem;
+      height: 1.8rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .device-icon {
+      width: 3rem;
+      height: 3rem;
+      background: rgba(0,212,255,0.07);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .device-name {
+      flex: 1;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .device-handle {
+      color: var(--border);
+      font-size: 1.1rem;
+      letter-spacing: -0.1em;
+      cursor: grab;
+      padding: 0 0.3rem;
+    }
+
+    /* Arrow between items */
+    .flow-arrow {
+      color: var(--border);
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0.15rem 0;
+      pointer-events: none;
+    }
+
+    /* Check button */
+    .check-btn {
+      width: 100%;
+      background: rgba(0,212,255,0.08);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      padding: 0.9rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s;
+      margin-bottom: 1.2rem;
+    }
+
+    .check-btn:hover:not(:disabled) { background: rgba(0,212,255,0.16); }
+    .check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Cooldown */
+    .cooldown-box {
+      display: none;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid var(--warn);
+      border-left: 4px solid var(--warn);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .cooldown-box.visible { display: flex; align-items: center; gap: 1rem; }
+
+    .cooldown-timer {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--warn);
+      min-width: 2.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .cooldown-text {
+      font-size: 0.85rem;
+      color: #fca;
+      line-height: 1.5;
+    }
+
+    .cooldown-bar-wrap {
+      height: 3px;
+      background: rgba(255,107,53,0.2);
+      margin-top: 0.5rem;
+    }
+
+    .cooldown-bar {
+      height: 3px;
+      background: var(--warn);
+      width: 100%;
+      transition: width 30s linear;
+    }
+
+    /* Success */
+    .success-box {
+      display: none;
+      background: rgba(0,255,136,0.07);
+      border: 2px solid var(--accent2);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .success-box.visible { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .success-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+
+    .success-letter {
+      font-size: 5rem;
+      font-weight: bold;
+      color: var(--accent2);
+      text-shadow: 0 0 30px rgba(0,255,136,0.7);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-answer {
+      font-size: 0.8rem;
+      color: var(--accent2);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-msg {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 0.5rem;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="page-header">
+    <div class="task-badge">Tehtävä 6 / 8</div>
+    <h1>VERKKOKAAVIO</h1>
+    <p class="intro">Kuudes kirjain löytyy, kun verkkolaitteet<br>on järjestetty oikeaan järjestykseen</p>
+  </div>
+
+  <div class="instruction">
+    Järjestä alla olevat verkkolaitteet oikeaan järjestykseen raahaamalla ne paikoilleen.
+    Kun olet valmis, paina <strong>TARKISTA</strong>.
+  </div>
+
+  <div class="device-list" id="deviceList"></div>
+
+  <div class="cooldown-box" id="cooldownBox">
+    <div class="cooldown-timer" id="cooldownTimer">30</div>
+    <div style="flex:1">
+      <div class="cooldown-text">
+        <strong>Väärä järjestys.</strong><br>
+        Odota ja mieti uudelleen.
+      </div>
+      <div class="cooldown-bar-wrap">
+        <div class="cooldown-bar" id="cooldownBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-box" id="successBox">
+    <div class="success-label">Kuudes kirjain on</div>
+    <div class="success-letter">U</div>
+    <div class="success-answer">Internet → Reititin → Kytkin → Työasema</div>
+    <div class="success-msg">Oikein! Kirjaa kirjain ylös ja siirry seuraavaan tehtävään.</div>
+  </div>
+
+  <button class="check-btn" id="checkBtn" onclick="checkOrder()">▶ TARKISTA JÄRJESTYS</button>
+
+</div>
+
+<footer>IT-PAKOHUONE 2.0 &nbsp;|&nbsp; Digijärjestelmän palautus</footer>
+
+<script>
+  const CORRECT = ['internet', 'reititin', 'kytkin', 'tyoasema'];
+  const COOLDOWN_SEC = 30;
+
+  const DEVICES = {
+    internet:  { label: 'Internet',  icon: 'WAN' },
+    reititin:  { label: 'Reititin',  icon: 'RTR' },
+    kytkin:    { label: 'Kytkin',    icon: 'SW'  },
+    tyoasema:  { label: 'Työasema',  icon: 'PC'  },
+  };
+
+  let cooldownActive = false;
+  let dragSrc = null;
+
+  // Shuffle ensuring result != correct order
+  function shuffle(arr) {
+    const a = [...arr];
+    do {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+    } while (a.join(',') === CORRECT.join(','));
+    return a;
+  }
+
+  function buildList(order) {
+    const list = document.getElementById('deviceList');
+    list.innerHTML = '';
+
+    order.forEach((id, i) => {
+      const d = DEVICES[id];
+
+      // Arrow above (except first)
+      if (i > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'flow-arrow';
+        arrow.textContent = '↓';
+        list.appendChild(arrow);
+      }
+
+      const slot = document.createElement('div');
+      slot.className = 'device-slot';
+
+      const el = document.createElement('div');
+      el.className = 'device';
+      el.draggable = true;
+      el.dataset.id = id;
+      el.innerHTML = `
+        <div class="device-pos">${i + 1}</div>
+        <div class="device-icon">${d.icon}</div>
+        <div class="device-name">${d.label}</div>
+        <div class="device-handle">⠿⠿</div>
+      `;
+
+      attachDragEvents(el);
+      slot.appendChild(el);
+      list.appendChild(slot);
+    });
+  }
+
+  function getDeviceEls() {
+    return [...document.querySelectorAll('#deviceList .device')];
+  }
+
+  function updatePositions() {
+    getDeviceEls().forEach((el, i) => {
+      el.querySelector('.device-pos').textContent = i + 1;
+    });
+  }
+
+  function attachDragEvents(el) {
+    el.addEventListener('dragstart', e => {
+      if (cooldownActive) { e.preventDefault(); return; }
+      dragSrc = el;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      clearDropIndicators();
+    });
+
+    el.addEventListener('dragover', e => {
+      if (!dragSrc || dragSrc === el) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      clearDropIndicators();
+      const rect = el.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) {
+        el.classList.add('drop-above');
+      } else {
+        el.classList.add('drop-below');
+      }
+    });
+
+    el.addEventListener('dragleave', () => clearDropIndicators());
+
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === el) return;
+
+      clearDropIndicators();
+
+      const srcSlot = dragSrc.closest('.device-slot');
+      const tgtSlot = el.closest('.device-slot');
+      const rect = el.getBoundingClientRect();
+      const after = e.clientY >= rect.top + rect.height / 2;
+
+      if (after) {
+        tgtSlot.after(srcSlot);
+      } else {
+        tgtSlot.before(srcSlot);
+      }
+
+      rebuildArrows();
+      updatePositions();
+    });
+  }
+
+  function rebuildArrows() {
+    const list = document.getElementById('deviceList');
+    // Remove all arrows
+    list.querySelectorAll('.flow-arrow').forEach(a => a.remove());
+    // Re-add between slots
+    const slots = [...list.querySelectorAll('.device-slot')];
+    slots.forEach((slot, i) => {
+      if (i > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'flow-arrow';
+        arrow.textContent = '↓';
+        slot.before(arrow);
+      }
+    });
+  }
+
+  function clearDropIndicators() {
+    document.querySelectorAll('.device').forEach(d => {
+      d.classList.remove('drop-above', 'drop-below');
+    });
+  }
+
+  function checkOrder() {
+    if (cooldownActive) return;
+
+    const current = getDeviceEls().map(el => el.dataset.id);
+    if (current.join(',') === CORRECT.join(',')) {
+      // Correct!
+      document.getElementById('checkBtn').disabled = true;
+      getDeviceEls().forEach(el => el.draggable = false);
+      document.getElementById('successBox').classList.add('visible');
+    } else {
+      startCooldown();
+    }
+  }
+
+  function startCooldown() {
+    cooldownActive = true;
+    document.getElementById('checkBtn').disabled = true;
+
+    const box   = document.getElementById('cooldownBox');
+    const timer = document.getElementById('cooldownTimer');
+    const bar   = document.getElementById('cooldownBar');
+
+    box.classList.add('visible');
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+
+    let remaining = COOLDOWN_SEC;
+    timer.textContent = remaining;
+
+    // Start bar animation after reflow
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.transition = `width ${COOLDOWN_SEC}s linear`;
+        bar.style.width = '0%';
+      });
+    });
+
+    const interval = setInterval(() => {
+      remaining--;
+      timer.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        cooldownActive = false;
+        box.classList.remove('visible');
+        document.getElementById('checkBtn').disabled = false;
+      }
+    }, 1000);
+  }
+
+  // Init
+  buildList(shuffle(CORRECT));
+</script>
+</body>
+</html>
